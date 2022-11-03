@@ -1,5 +1,4 @@
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -11,11 +10,11 @@ import java.nio.file.Path;
 
 public class Server {
 
+    private static final String Prefix = "D:/geekbrains/OOP/Practice_5/web";
     public static void main(String[] args) {
-        String currPathName = "";
         try {
             try (ServerSocket serverSocket = new ServerSocket(8080)) {
-                for (;;) {
+                for(;;) {
                     Socket socket = serverSocket.accept();
                     System.out.println("Client connected");
                     BufferedReader reader = new BufferedReader(
@@ -25,11 +24,10 @@ public class Server {
                     PrintWriter writer = new PrintWriter(
                             socket.getOutputStream());
 
-                    while (!reader.ready())
-                        ;
+                    while (!reader.ready()) ;
 
-                    String[] items = new String[200];
-                    if (reader.ready()) {
+                    String[] items = new String[10];
+                    if (reader.ready()){
                         String line = reader.readLine();
                         items = line.split(" ");
                     }
@@ -37,30 +35,24 @@ public class Server {
                     while (reader.ready()) {
                         System.out.println(reader.readLine());
                     }
-                    currPathName = items[1];
-                    File currDir = new File(currPathName);
-
-                    if (currDir.exists()) {
-                        File [] files = currDir.listFiles();
+                    Path fileLink = Path.of(Prefix, items[1]);
+                    if (Files.exists(fileLink) && !Files.isDirectory(fileLink)) {
                         writer.println("HTTP/1.1 200 OK");
                         writer.println("Content-Type: text/html; charset=utf-8");
                         writer.println();
-                        for (File file : files) {
-                            writer.println(file.getName()+ "<br />");
-                            //writer.println("");
+                        try (BufferedReader br = Files.newBufferedReader(fileLink)){
+                            br.transferTo(writer);
                         }
-                        
                         writer.flush();
-                    } else {
+                    }else{
 
-                        writer.println("HTTP/1.1 404 OK");
-                        writer.println("Content-Type: text/html; charset=utf-8");
-                        writer.println();
-                        writer.println("<h1>File is not exist</h1>");
-                        writer.flush();
-                    }
+                    writer.println("HTTP/1.1 404 OK");
+                    writer.println("Content-Type: text/html; charset=utf-8");
+                    writer.println();
+                    writer.println("<h1>File is not exist</h1>");
+                    writer.flush();}
 
-                 socket.close();
+                   socket.close();
                 }
             }
         } catch (IOException e) {
